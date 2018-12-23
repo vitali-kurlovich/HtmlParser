@@ -1,11 +1,14 @@
 import XCTest
 @testable import HtmlParser
 
+// <!DOCTYPE html>
+// <meta charset="utf-8" />
+
 private let htmlDoc = """
-<!DOCTYPE html>
+
 <html>
 <head>
-<meta charset="utf-8" />
+
 <title>HTML Document</title>
 </head>
 <body>
@@ -18,7 +21,7 @@ private let htmlDoc = """
 
 final class HtmlParserTests: XCTestCase {
     
-    func testHTMLTag() {
+    func testHtmlTag() {
         let html = """
 <t id =    "2" attr="   test ">
  text   1   2         3
@@ -26,7 +29,7 @@ final class HtmlParserTests: XCTestCase {
 
 </t>
 """
-        let tag = HTMLTag(html)
+        let tag = HtmlNode(html)
         
         XCTAssertEqual(tag.tag, "t")
         XCTAssertEqual(tag.text, " text 1 2 3 text2 ")
@@ -44,11 +47,56 @@ final class HtmlParserTests: XCTestCase {
         
     }
     
+    func testHtmlNode() {
+        let html = """
+<head>
+<title>HTML Document</title>
+</head>
+"""
+        let node = HtmlNode(html)
+        XCTAssertEqual(node.tag, "head")
+        XCTAssertEqual(node.text, "HTML Document")
+        
+       let childs = node.childs
+        XCTAssertEqual(childs?.count, 1)
+        
+        let title = childs?.first
+        XCTAssertEqual(title?.tag, "title")
+        XCTAssertEqual(title?.text, "HTML Document")
+    }
+    
+    func testHtmlMetaNode() {
+        let html = """
+<head>
+<title>HTML Document</title>
+<meta charset="utf-8" />
+</head>
+"""
+        let node = HtmlNode(html)
+        XCTAssertEqual(node.tag, "head")
+        XCTAssertEqual(node.text, "HTML Document")
+        
+        let childs = node.childs
+        XCTAssertEqual(childs?.count, 2)
+        
+        let title = childs?.first
+        XCTAssertEqual(title?.tag, "title")
+        XCTAssertEqual(title?.text, "HTML Document")
+        
+        let meta = childs?.last
+        XCTAssertEqual(meta?.tag, "meta")
+    }
     
     func testHTMLDocument() {
-        let tag = HTMLTag(htmlDoc)
+        let doc = HtmlDocument(htmlDoc)
+        let header = doc.head
         
-        debugPrint(tag.tag)
+        let childs = doc.childs
+         XCTAssertNotNil(childs)
+        XCTAssertNotNil(header)
+        
+        XCTAssertEqual( doc.head?.find(tag: "title")?.text, "HTML Document" )
+       // debugPrint(tag.tag)
     }
     
 }
