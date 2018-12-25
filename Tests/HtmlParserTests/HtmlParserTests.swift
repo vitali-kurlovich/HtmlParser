@@ -1,27 +1,61 @@
 import XCTest
 @testable import HtmlParser
 
-// <!DOCTYPE html>
+//
 // <meta charset="utf-8" />
 
 private let htmlDoc = """
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>HTML Document</title>
+    </head>
+    <body>
+        <p>
+            <b>This text is bold, <i> that is italic </i>.</b>
+        </p>
+    </body>
+</html>
+"""
+
+
+// <!DOCTYPE html>
+private let htmlDocSimple = """
 
 <html>
-<head>
-
-<title>HTML Document</title>
-</head>
-<body>
-<p>
-<b>This text is bold, <i> that is italic </i>.</b>
-</p>
-</body>
+    <head>
+        <meta charset="utf-8" />
+        <title>HTML Document</title>
+    </head>
+    <body>
+        <p>
+            <b>This text is bold, <i> that is italic </i>.</b>
+        </p>
+    </body>
 </html>
 """
 
 final class HtmlParserTests: XCTestCase {
-    
     func testHtmlTag() {
+        var tag = Substring("<br attr>")
+        var result =  htmlTag(tag)
+        
+        XCTAssertEqual(result, "br")
+        
+        tag = Substring("</br>")
+        result =  htmlTag(tag)
+        XCTAssertEqual(result, "br")
+    }
+    
+    
+    func testParseChild() {
+        let childs  = parseChild(Substring(htmlDocSimple))
+        XCTAssertEqual(childs.count , 2)
+    }
+    
+    
+    func testHtmlNode() {
         let html = """
 <t id =    "2" attr="   test ">
  text   1   2         3
@@ -37,17 +71,17 @@ final class HtmlParserTests: XCTestCase {
         XCTAssertEqual(tag.attributes, ["id": "2", "attr":"   test "])
         XCTAssertEqual(tag.childs?.count, 1)
         
-        let tagH = tag.childs!.first!
-        XCTAssertEqual(tagH.tag, "h")
+        let tagH = tag.childs?.first
+        XCTAssertEqual(tagH?.tag, "h")
         
-        XCTAssertEqual(tagH.text, " text2 ")
+        XCTAssertEqual(tagH?.text, " text2 ")
         
-        XCTAssertNil(tagH.attributes)
-        XCTAssertNil(tagH.childs)
+        XCTAssertNil(tagH?.attributes)
+        XCTAssertNil(tagH?.childs)
         
     }
     
-    func testHtmlNode() {
+    func testHtmlNode2() {
         let html = """
 <head>
 <title>HTML Document</title>
@@ -76,6 +110,8 @@ final class HtmlParserTests: XCTestCase {
         XCTAssertEqual(node.tag, "head")
         XCTAssertEqual(node.text, "HTML Document")
         
+        
+        
         let childs = node.childs
         XCTAssertEqual(childs?.count, 2)
         
@@ -88,14 +124,18 @@ final class HtmlParserTests: XCTestCase {
     }
     
     func testHTMLDocument() {
-        let doc = HtmlDocument(htmlDoc)
-        let header = doc.head
+        let doc = HtmlDocument(htmlDocSimple)
         
-        let childs = doc.childs
-         XCTAssertNotNil(childs)
-        XCTAssertNotNil(header)
+        //print(htmlDoc)
+        let root = doc.root
+         XCTAssertNotNil(root?.childs)
+         XCTAssertEqual(root?.childs?.count, 2)
         
-        XCTAssertEqual( doc.head?.find(tag: "title")?.text, "HTML Document" )
+//        let head = doc.head
+//        XCTAssertNotNil(head)
+        
+        
+       // XCTAssertEqual( doc.head?.first(tag: "title")?.text, "HTML Document" )
        // debugPrint(tag.tag)
     }
     

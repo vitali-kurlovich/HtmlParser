@@ -7,7 +7,6 @@
 
 import Foundation
 
-
 private
 let htmlEntities = ["&nbsp;": " ",
                     "&lt;": "<",
@@ -26,30 +25,30 @@ internal
 extension StringProtocol {
     var isWhitespace: Bool {
         let dropedSet = CharacterSet.whitespacesAndNewlines
-        
+
         for char in self {
             let charScalars = char.unicodeScalars
             guard charScalars.count == 1,
                 let scalar = charScalars.first,
                 dropedSet.contains(scalar) else {
-                    return false
+                return false
             }
         }
-        
+
         return true
     }
-    
+
     func range(_ set: CharacterSet, range: Range<Self.Index>? = nil) -> Range<Self.Index>? {
         var findRange = startIndex ..< endIndex
-        
+
         if let range = range {
             findRange = range
         }
-        
+
         var start: Self.Index?
         for index in indices[findRange] {
             let char = self[index]
-            
+
             let charScalars = char.unicodeScalars
             if charScalars.count == 1,
                 let scalar = charScalars.first,
@@ -57,20 +56,20 @@ extension StringProtocol {
                 if start == nil {
                     start = index
                 }
-                
+
             } else {
                 if let start = start {
                     return start ..< index
                 }
-                
+
                 continue
             }
         }
-        
+
         if let start = start {
             return start ..< findRange.upperBound
         }
-        
+
         return nil
     }
 }
@@ -81,18 +80,18 @@ extension StringProtocol {
         var range = startIndex ..< endIndex
         var result = ""
         result.reserveCapacity(count)
-        
+
         while let r = self.range(CharacterSet.whitespacesAndNewlines, range: range) {
             let sub = self[range.lowerBound ..< r.lowerBound]
             result.append(contentsOf: sub)
             result.append(contentsOf: " ")
-            
+
             range = r.upperBound ..< range.upperBound
         }
-        
+
         let sub = self[range.lowerBound ..< self.endIndex]
         result.append(contentsOf: sub)
-        
+
         return result
     }
 }
@@ -103,14 +102,14 @@ extension String {
         guard contains("&") else {
             return self
         }
-        
+
         var result = ""
         result.reserveCapacity(count)
         var range = startIndex ..< endIndex
-        
+
         while let r = self.range(of: "&", options: [], range: range) {
             let subRange = range.lowerBound ..< r.lowerBound
-            
+
             range = r.lowerBound ..< range.upperBound
             var flag = false
             for (key, value) in htmlEntities {
@@ -124,7 +123,7 @@ extension String {
                     }
                 }
             }
-            
+
             guard flag else {
                 result.append(contentsOf: self[subRange.lowerBound ..< r.upperBound])
                 range = r.upperBound ..< range.upperBound
@@ -137,4 +136,3 @@ extension String {
         return result
     }
 }
-
