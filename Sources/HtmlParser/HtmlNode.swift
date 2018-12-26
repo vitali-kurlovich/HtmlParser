@@ -169,9 +169,12 @@ final class HtmlNode {
 }
 
 extension HtmlNode {
-    public subscript(tag: String) -> HtmlNode? {
-        let tag = tag.lowercased()
-        return _first(tag: tag)
+    public subscript(key: String) -> HtmlNode? {
+        if key.hasPrefix("#") {
+            return first(id: String(key.dropFirst()))
+        }
+
+        return first(tag: key)
     }
 }
 

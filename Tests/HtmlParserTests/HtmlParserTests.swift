@@ -184,5 +184,11 @@ final class HtmlParserTests: XCTestCase {
 
         let script = body?.first(tag: "script")
         XCTAssertEqual(script?.type, "text/javascript")
+
+        let div = body?["div"]
+        XCTAssertEqual(div?.id, "images")
+
+        let images = body?["#images"]
+        XCTAssertEqual(images?.tag, "div")
     }
 }
