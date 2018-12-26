@@ -2,29 +2,41 @@
 import XCTest
 
 private let htmlDoc = """
+
 <!DOCTYPE html>
+
 <html>
     <head>
-        <meta charset="utf-8" />
-        <title>HTML Document</title>
+        <meta charset="utf-8" id = "a" />
+        <title id = "b">HTML Document</title>
     </head>
     <body>
-        <p>
+        <p >
             <!--This is a comment. Comments are not displayed in the browser-->
-            <b>This text is bold, <i> that is italic </i>.</b>
+            <b >This text is bold, <i> that is italic </i>.</b>
         </p>
         <script type="text/javascript">
-            <!--
+// <p>
+// <b><a href = "link:\\site">Link</a></b>
+// </p>
+
+var br = 3
+var div = 6
+if 3<br || div> {}
+var a = 5
+
+if a <div {
+}
 function displayMsg() {
 alert("Hello World!")
 }
-            //-->
+
         </script>
 
-        <img src="first.gif" alt="Smiley face" height="42" width="42">
+        <img src="first.gif" alt="Smiley face" height="42" width="42" >
         <!--This is a comment.-->
         <div id = "images">
-            <b>Bold text <br> new line </b>
+            <b  >Bold text <br> new line </b>
                 <img src="second.gif"/>
             <p>
                 <img src="third.gif"></img>
@@ -114,13 +126,17 @@ final class HtmlParserTests: XCTestCase {
     func testHTMLDocument() {
         let doc = HtmlDocument(htmlDoc)
 
-        // print(htmlDoc)
         let root = doc.root
         XCTAssertNotNil(root?.childs)
         XCTAssertEqual(root?.childs?.count, 2)
 
         let head = doc.head
         XCTAssertEqual(head?.childs?.count, 2)
+        XCTAssertEqual(head?.nodesCount(ignoreComment: true), 2)
+        XCTAssertEqual(head?.nodesCount(ignoreComment: false), 2)
+
+        XCTAssertEqual(head?.nodes?[0].tag, "meta")
+        XCTAssertEqual(head?.nodes?[1].tag, "title")
 
         let meta = head?.first(tag: "meta")
         let charset = meta?.attributes?["charset"]
@@ -131,9 +147,42 @@ final class HtmlParserTests: XCTestCase {
 
         let body = doc.body
         XCTAssertEqual(body?.childs?.count, 5)
+        XCTAssertEqual(body?.nodesCount(ignoreComment: false), 13)
+        XCTAssertEqual(body?.nodesCount(ignoreComment: true), 11)
+
+        XCTAssertEqual(body?.nodes?[0].tag, "p")
+        XCTAssertEqual(body?.nodes?[1].tag, "b")
+        XCTAssertEqual(body?.nodes?[2].tag, "i")
+        XCTAssertEqual(body?.nodes?[3].tag, "script")
+        XCTAssertEqual(body?.nodes?[4].tag, "img")
+        XCTAssertEqual(body?.nodes?[5].tag, "div")
+        XCTAssertEqual(body?.nodes?[6].tag, "b")
+        XCTAssertEqual(body?.nodes?[7].tag, "br")
+        XCTAssertEqual(body?.nodes?[8].tag, "img")
+        XCTAssertEqual(body?.nodes?[9].tag, "p")
+        XCTAssertEqual(body?.nodes?[10].tag, "img")
+
+        var iterator = body?.makeIterator()
+
+        XCTAssertEqual(iterator?.next()?.tag, "body")
+        XCTAssertEqual(iterator?.next()?.tag, "p")
+        XCTAssertEqual(iterator?.next()?.tag, "b")
+        XCTAssertEqual(iterator?.next()?.tag, "i")
+        XCTAssertEqual(iterator?.next()?.tag, "script")
+        XCTAssertEqual(iterator?.next()?.tag, "img")
+        XCTAssertEqual(iterator?.next()?.tag, "div")
+        XCTAssertEqual(iterator?.next()?.tag, "b")
+        XCTAssertEqual(iterator?.next()?.tag, "br")
+        XCTAssertEqual(iterator?.next()?.tag, "img")
+        XCTAssertEqual(iterator?.next()?.tag, "p")
+        XCTAssertEqual(iterator?.next()?.tag, "img")
+        XCTAssertNil(iterator?.next())
 
         let img = doc.first(tag: "img")
         let src = img?.attributes?["src"]
         XCTAssertEqual(src, "first.gif")
+
+        let script = body?.first(tag: "script")
+        XCTAssertEqual(script?.type, "text/javascript")
     }
 }

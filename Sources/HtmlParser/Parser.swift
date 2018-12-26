@@ -33,6 +33,31 @@ let tagsWithoutClosedSet: Set<Substring> = {
     return Set(tags)
 }()
 
+private
+let scriptTag = "script"
+
+private
+let scriptTagSet: Set<Substring> = {
+    var tags = [Substring]()
+    tags.reserveCapacity(tagsWithoutClosed.count * 3)
+
+    tags.append(Substring(scriptTag))
+    tags.append(Substring(scriptTag.uppercased()))
+    tags.append(Substring(scriptTag.capitalized))
+
+    return Set(tags)
+}()
+
+internal
+func isScriptTag(_ tag: Substring) -> Bool {
+    return scriptTagSet.contains(tag)
+}
+
+internal
+func isScriptTag(_ tag: String) -> Bool {
+    return scriptTagSet.contains(Substring(tag))
+}
+
 internal
 func htmlTag(_ string: Substring) -> Substring {
     guard var tagBegin = string.range(of: "<"),
@@ -165,6 +190,25 @@ func parseChild(_ html: Substring) -> [Substring] {
         }
 
         let tagName = htmlTag(tag)
+
+        if isScriptTag(tagName) {
+            assert(rangeStack.count > 0)
+            guard let tagBegin = rangeStack.popLast() else {
+                continue
+            }
+
+            guard let tagEnd = html.range(of: ("</" + tagName), options: [], range: range) else {
+                continue
+            }
+
+            range = tagEnd.upperBound ..< html.endIndex
+            if rangeStack.count == 1 {
+                let tagRange = tagBegin.lowerBound ..< tagEnd.upperBound
+                let node = html[tagRange]
+                childs.append(node)
+            }
+            continue
+        }
 
         if tagsWithoutClosedSet.contains(tagName) {
             guard let tagBegin = html.range(of: "<", options: [], range: range) else {

@@ -7,7 +7,53 @@
 
 import Foundation
 
-public class HtmlNode {
+extension HtmlNode {
+    public
+    func nodes(ignoreComment: Bool) -> [HtmlNode]? {
+        guard let childs = childs else {
+            return nil
+        }
+
+        let count = nodesCount(ignoreComment: ignoreComment)
+
+        guard count > 0 else {
+            return nil
+        }
+
+        var nodes = [HtmlNode]()
+        nodes.reserveCapacity(count)
+
+        for child in childs {
+            if !(ignoreComment && child.isComment) {
+                nodes.append(child)
+            }
+            guard let childNodes = child.nodes(ignoreComment: ignoreComment) else {
+                continue
+            }
+            nodes.append(contentsOf: childNodes)
+        }
+
+        return nodes
+    }
+
+    internal
+    func nodesCount(ignoreComment: Bool = true) -> Int {
+        guard let childs = childs else {
+            return 0
+        }
+
+        let count = ignoreComment ? childs.reduce(0) { (count, node) -> Int in
+            return count + (node.isComment ? 0 : 1)
+        } : childs.count
+
+        return childs.reduce(count) { (count, node) -> Int in
+            count + node.nodesCount(ignoreComment: ignoreComment)
+        }
+    }
+}
+
+public
+final class HtmlNode {
     public let html: Substring
 
     public convenience init(_ html: String) {
@@ -27,6 +73,10 @@ public class HtmlNode {
         return tag.hasPrefix("<!--")
     }()
 
+    private(set) lazy var isScript: Bool = {
+        isScriptTag(htmlTag(self.html))
+    }()
+
     private(set) lazy var tag: String = {
         if isComment {
             return ""
@@ -34,12 +84,16 @@ public class HtmlNode {
         return htmlTag(html).lowercased()
     }()
 
-    public private(set) lazy var childs: [HtmlNode]? = {
+    public
+    private(set) lazy var childs: [HtmlNode]? = {
         if !isComment {
             return parseChildNodes(html)
         }
         return nil
     }()
+
+    public
+    lazy var nodes: [HtmlNode]? = { self.nodes(ignoreComment: true) }()
 
     public private(set) lazy var attributes: [String: String]? = {
         if isComment {
@@ -57,6 +111,10 @@ public class HtmlNode {
 
     public
     private(set) lazy var text: String? = {
+        if isComment || isScript {
+            return nil
+        }
+
         var text = ""
 
         var range = html.startIndex ..< html.endIndex
