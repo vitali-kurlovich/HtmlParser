@@ -136,13 +136,44 @@ func parseChild(_ html: Substring) -> [Substring] {
             continue
         }
 
+        if tag.hasPrefix("<!--") {
+            assert(rangeStack.count > 0)
+            guard let tagBegin = rangeStack.popLast() else {
+                continue
+            }
+
+            range = tagBegin.upperBound ..< html.endIndex
+
+            if tag.hasSuffix("-->") {
+                if rangeStack.count == 1 {
+                    childs.append(tag)
+                }
+                continue
+            }
+
+            guard let tagEnd = html.range(of: "-->", options: [], range: range) else {
+                continue
+            }
+
+            range = tagEnd.upperBound ..< html.endIndex
+            if rangeStack.count == 1 {
+                let tagRange = tagBegin.lowerBound ..< tagEnd.upperBound
+                let node = html[tagRange]
+                childs.append(node)
+            }
+            continue
+        }
+
         let tagName = htmlTag(tag)
 
         if tagsWithoutClosedSet.contains(tagName) {
             guard let tagBegin = html.range(of: "<", options: [], range: range) else {
-                childs.append(tag)
                 assert(rangeStack.count > 0)
                 _ = rangeStack.popLast()
+
+                if rangeStack.count == 1 {
+                    childs.append(tag)
+                }
 
                 continue
             }
@@ -150,17 +181,22 @@ func parseChild(_ html: Substring) -> [Substring] {
             let tagBeginClosed = tagBegin.lowerBound ..< html.index(after: tagBegin.upperBound)
 
             guard html[tagBeginClosed] == "</" else {
-                childs.append(tag)
                 assert(rangeStack.count > 0)
                 _ = rangeStack.popLast()
+                if rangeStack.count == 1 {
+                    childs.append(tag)
+                }
                 continue
             }
 
             let searchRange = tagBegin.upperBound ..< html.endIndex
             guard let tagEnd = html.range(of: ">", options: [], range: searchRange) else {
-                childs.append(tag)
                 assert(rangeStack.count > 0)
                 _ = rangeStack.popLast()
+
+                if rangeStack.count == 1 {
+                    childs.append(tag)
+                }
                 continue
             }
 
@@ -170,11 +206,15 @@ func parseChild(_ html: Substring) -> [Substring] {
             let nextTagName = htmlTag(nextTag)
 
             if tagName == nextTagName {
-                childs.append(tag)
                 assert(rangeStack.count > 0)
                 _ = rangeStack.popLast()
 
+                if rangeStack.count == 1 {
+                    childs.append(tag)
+                }
+
                 range = tagRange.upperBound ..< html.endIndex
+
                 continue
             }
         }

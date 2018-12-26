@@ -8,16 +8,19 @@ let package = Package(
     products: [
         .library(
             name: "HtmlParser",
-            targets: ["HtmlParser"]),
+            targets: ["HtmlParser"]
+        ),
     ],
     dependencies: [
     ],
     targets: [
         .target(
             name: "HtmlParser",
-            dependencies: []),
+            dependencies: []
+        ),
         .testTarget(
             name: "HtmlParserTests",
-            dependencies: ["HtmlParser"]),
+            dependencies: ["HtmlParser"]
+        ),
     ]
 )

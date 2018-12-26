@@ -18,15 +18,33 @@ public class HtmlNode {
         self.html = html
     }
 
+    private(set) lazy var isComment: Bool = {
+        guard let tagBegin = html.range(of: "<") else {
+            return false
+        }
+
+        let tag = html[tagBegin.lowerBound ..< html.endIndex]
+        return tag.hasPrefix("<!--")
+    }()
+
     private(set) lazy var tag: String = {
-        htmlTag(html).lowercased()
+        if isComment {
+            return ""
+        }
+        return htmlTag(html).lowercased()
     }()
 
     public private(set) lazy var childs: [HtmlNode]? = {
-        parseChildNodes(html)
+        if !isComment {
+            return parseChildNodes(html)
+        }
+        return nil
     }()
 
     public private(set) lazy var attributes: [String: String]? = {
+        if isComment {
+            return nil
+        }
         let sTag = "<" + tag
         guard let start = html.range(of: sTag, options: [.caseInsensitive]),
             let end = html.range(of: ">") else {
